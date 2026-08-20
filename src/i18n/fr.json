@@ -1,0 +1,13 @@
+{
+  "app.title": "Ledgerly",
+  "app.tagline": "Un petit espace de travail multi-locataires",
+  "projects.heading": "Projets",
+  "projects.empty": "Aucun projet pour le moment",
+  "projects.active": "{count} actifs",
+  "projects.archived": "{count} archivés",
+  "projects.add": "Ajouter un projet",
+  "projects.delete": "Supprimer",
+  "error.unauthorized": "Connectez-vous pour continuer",
+  "error.forbidden": "Seul un propriétaire peut faire cela",
+  "error.notFound": "Ce projet est introuvable"
+}
