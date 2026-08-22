@@ -2,11 +2,17 @@ import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
 
 import { createDatabase, withSession } from "../src/db.js";
-import { createProject, deleteProject } from "../src/projects.js";
+import {
+  archiveProject,
+  createProject,
+  deleteProject,
+  unarchiveProject,
+} from "../src/projects.js";
 import { isOwner, sessionFromRequest } from "../src/auth.js";
 
 const OWNER_A = { tenantId: "a", role: "owner" };
 const STAFF_A = { tenantId: "a", role: "staff" };
+const OWNER_B = { tenantId: "b", role: "owner" };
 
 let db;
 
@@ -54,4 +60,25 @@ test("an owner can delete their own project", async () => {
   const project = await createProject(db, OWNER_A, "Temporary");
   const result = await deleteProject(db, OWNER_A, project.id);
   assert.equal(result.id, project.id);
+});
+
+test("a project can be archived and unarchived", async () => {
+  const project = await createProject(db, STAFF_A, "Archive cycle");
+  const archived = await archiveProject(db, STAFF_A, project.id);
+  assert.equal(archived.archived, true);
+
+  const unarchived = await unarchiveProject(db, STAFF_A, project.id);
+  assert.equal(unarchived.archived, false);
+});
+
+test("archive operations cannot access another tenant's project", async () => {
+  const project = await createProject(db, OWNER_A, "Tenant A only");
+  await assert.rejects(
+    () => archiveProject(db, OWNER_B, project.id),
+    (error) => error.status === 404,
+  );
+  await assert.rejects(
+    () => unarchiveProject(db, OWNER_B, project.id),
+    (error) => error.status === 404,
+  );
 });

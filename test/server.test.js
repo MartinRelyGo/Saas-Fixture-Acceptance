@@ -89,6 +89,54 @@ test("staff cannot delete and cross-tenant deletes fail", async () => {
   assert.equal(ownerAttempt.status, 200);
 });
 
+test("archive and unarchive routes update a project", async () => {
+  const created = await (
+    await fetch(`${baseUrl}/api/projects`, {
+      method: "POST",
+      headers: { ...STAFF_A, "content-type": "application/json" },
+      body: JSON.stringify({ name: "Archive from API" }),
+    })
+  ).json();
+
+  const archiveRes = await fetch(`${baseUrl}/api/projects/${created.project.id}/archive`, {
+    method: "POST",
+    headers: STAFF_A,
+  });
+  const archived = await archiveRes.json();
+  assert.equal(archiveRes.status, 200);
+  assert.equal(archived.project.archived, true);
+
+  const unarchiveRes = await fetch(`${baseUrl}/api/projects/${created.project.id}/unarchive`, {
+    method: "POST",
+    headers: STAFF_A,
+  });
+  const unarchived = await unarchiveRes.json();
+  assert.equal(unarchiveRes.status, 200);
+  assert.equal(unarchived.project.archived, false);
+});
+
+test("archive routes preserve tenant isolation and return 404 for missing projects", async () => {
+  const created = await (
+    await fetch(`${baseUrl}/api/projects`, {
+      method: "POST",
+      headers: { ...OWNER_A, "content-type": "application/json" },
+      body: JSON.stringify({ name: "No cross-tenant archive" }),
+    })
+  ).json();
+
+  const crossTenant = await fetch(`${baseUrl}/api/projects/${created.project.id}/archive`, {
+    method: "POST",
+    headers: OWNER_B,
+  });
+  assert.equal(crossTenant.status, 404);
+
+  const missing = await fetch(`${baseUrl}/api/projects/missing/unarchive`, {
+    method: "POST",
+    headers: OWNER_A,
+  });
+  assert.equal(missing.status, 404);
+});
+
 test("unknown API routes return 404", async () => {
   const res = await fetch(`${baseUrl}/api/nope`, { headers: OWNER_A });
   assert.equal(res.status, 404);
