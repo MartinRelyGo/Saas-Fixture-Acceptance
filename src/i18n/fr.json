@@ -5,10 +5,14 @@
   "projects.empty": "Aucun projet pour le moment",
   "projects.active": "{count} actifs",
   "projects.archived": "{count} archivés",
+  "projects.filter.all": "Tous les projets",
+  "projects.filter.active": "Projets actifs",
+  "projects.filter.archived": "Projets archivés",
   "projects.add": "Ajouter un projet",
   "projects.delete": "Supprimer",
   "error.unauthorized": "Connectez-vous pour continuer",
   "error.forbidden": "Seul un propriétaire peut faire cela",
   "error.notFound": "Ce projet est introuvable",
   "projects.humanNote": "Modifié directement par une personne pendant le travail de Buildago."
+
 }

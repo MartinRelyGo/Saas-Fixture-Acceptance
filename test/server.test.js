@@ -3,6 +3,32 @@ import { after, before, test } from "node:test";
 
 import { startServer } from "../server.js";
 
+test("GET /api/projects filters archived projects without widening tenancy", async () => {
+  const server = await startServer(0);
+  try {
+    const { port } = server.address();
+    for (const [filter, expectedArchived] of [
+      ["all", null],
+      ["active", false],
+      ["archived", true],
+    ]) {
+      const response = await fetch(`http://localhost:${port}/api/projects?archived=${filter}`, {
+        headers: { authorization: "Bearer token-a-owner" },
+      });
+      const body = await response.json();
+
+      assert.equal(response.status, 200);
+      assert.ok(body.projects.every((project) => project.tenant_id === "a"));
+      if (expectedArchived !== null) {
+        assert.ok(body.projects.every((project) => project.archived === expectedArchived));
+      }
+    }
+  } finally {
+    await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+    await server.database.close();
+  }
+});
+
 const OWNER_A = { Authorization: "Bearer token-a-owner" };
 const STAFF_A = { Authorization: "Bearer token-a-staff" };
 const OWNER_B = { Authorization: "Bearer token-b-owner" };

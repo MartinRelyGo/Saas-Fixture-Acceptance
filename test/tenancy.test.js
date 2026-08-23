@@ -4,6 +4,24 @@ import { after, before, test } from "node:test";
 import { createDatabase, withSession } from "../src/db.js";
 import { createProject, deleteProject, listProjects } from "../src/projects.js";
 
+test("project archive filters preserve tenant isolation", async () => {
+  for (const filter of ["all", "active", "archived"]) {
+    const a = await listProjects(db, OWNER_A, filter);
+    const b = await listProjects(db, OWNER_B, filter);
+
+    assert.ok(a.every((project) => project.tenant_id === "a"));
+    assert.ok(b.every((project) => project.tenant_id === "b"));
+
+    if (filter === "active") {
+      assert.ok(a.every((project) => project.archived === false));
+      assert.ok(b.every((project) => project.archived === false));
+    } else if (filter === "archived") {
+      assert.ok(a.every((project) => project.archived === true));
+      assert.ok(b.every((project) => project.archived === true));
+    }
+  }
+});
+
 const OWNER_A = { tenantId: "a", role: "owner" };
 const OWNER_B = { tenantId: "b", role: "owner" };
 

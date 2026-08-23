@@ -65,7 +65,11 @@ export async function startServer(port = 3000, db) {
         }
 
         if (url.pathname === "/api/projects" && req.method === "GET") {
-          const projects = await listProjects(database, session);
+          const archived = url.searchParams.get("archived") ?? "all";
+          const tenantProjects = await listProjects(database, session);
+          const projects = tenantProjects.filter((project) =>
+            archived === "active" ? !project.archived : archived === "archived" ? project.archived : true,
+          );
           return json(res, 200, {
             projects,
             summary: summarize(projects, locale),
