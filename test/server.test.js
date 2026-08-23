@@ -3,6 +3,23 @@ import { after, before, test } from "node:test";
 
 import { startServer } from "../server.js";
 
+test("the projects API filters archived status within the session tenant", async () => {
+  for (const [archived, expected] of [
+    ["all", null],
+    ["active", false],
+    ["archived", true],
+  ]) {
+    const suffix = archived === "all" ? "" : `?archived=${archived}`;
+    const response = await fetch(`${baseUrl}/api/projects${suffix}`, { headers: OWNER_A });
+    const body = await response.json();
+    assert.equal(response.status, 200);
+    assert.ok(body.projects.every((project) => project.tenant_id === "a"));
+    if (expected !== null) {
+      assert.ok(body.projects.every((project) => project.archived === expected));
+    }
+  }
+});
+
 const OWNER_A = { Authorization: "Bearer token-a-owner" };
 const STAFF_A = { Authorization: "Bearer token-a-staff" };
 const OWNER_B = { Authorization: "Bearer token-b-owner" };
