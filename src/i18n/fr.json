@@ -9,5 +9,6 @@
   "projects.delete": "Supprimer",
   "error.unauthorized": "Connectez-vous pour continuer",
   "error.forbidden": "Seul un propriétaire peut faire cela",
-  "error.notFound": "Ce projet est introuvable"
+  "error.notFound": "Ce projet est introuvable",
+  "projects.humanNote": "Modifié directement par une personne pendant le travail de Buildago."
 }
