@@ -47,6 +47,30 @@ export async function deleteProject(db, session, id) {
   });
 }
 
+export async function archiveProject(db, session, id) {
+  if (session.role !== "owner") throw new AppError(403, "error.forbidden");
+  return withSession(db, session, async (tx) => {
+    const res = await tx.query(
+      "UPDATE projects SET archived = true WHERE id = $1 RETURNING id, tenant_id, name, archived",
+      [id],
+    );
+    if (res.rows.length === 0) throw new AppError(404, "error.notFound");
+    return res.rows[0];
+  });
+}
+
+export async function unarchiveProject(db, session, id) {
+  if (session.role !== "owner") throw new AppError(403, "error.forbidden");
+  return withSession(db, session, async (tx) => {
+    const res = await tx.query(
+      "UPDATE projects SET archived = false WHERE id = $1 RETURNING id, tenant_id, name, archived",
+      [id],
+    );
+    if (res.rows.length === 0) throw new AppError(404, "error.notFound");
+    return res.rows[0];
+  });
+}
+
 export function summarize(projects, locale) {
   if (projects.length === 0) return t(locale, "projects.empty");
   const active = projects.filter((p) => !p.archived).length;

@@ -61,6 +61,97 @@ test("a project can be created and is scoped to the caller", async () => {
   assert.equal(body.project.tenant_id, "a", "a client-supplied tenant_id must be ignored");
 });
 
+test("an owner can archive and unarchive a project", async () => {
+  const created = await (
+    await fetch(`${baseUrl}/api/projects`, {
+      method: "POST",
+      headers: { ...OWNER_A, "content-type": "application/json" },
+      body: JSON.stringify({ name: "Archive me" }),
+    })
+  ).json();
+
+  const archived = await fetch(`${baseUrl}/api/projects/${created.project.id}/archive`, {
+    method: "POST",
+    headers: OWNER_A,
+  });
+  const archivedBody = await archived.json();
+  assert.equal(archived.status, 200);
+  assert.equal(archivedBody.project.archived, true);
+  assert.equal(archivedBody.project.tenant_id, "a");
+
+  const listedArchived = await (
+    await fetch(`${baseUrl}/api/projects`, { headers: OWNER_A })
+  ).json();
+  assert.equal(
+    listedArchived.projects.find((project) => project.id === created.project.id).archived,
+    true,
+  );
+
+  const unarchived = await fetch(`${baseUrl}/api/projects/${created.project.id}/unarchive`, {
+    method: "POST",
+    headers: OWNER_A,
+  });
+  const unarchivedBody = await unarchived.json();
+  assert.equal(unarchived.status, 200);
+  assert.equal(unarchivedBody.project.archived, false);
+});
+
+test("staff cannot archive or unarchive projects", async () => {
+  const created = await (
+    await fetch(`${baseUrl}/api/projects`, {
+      method: "POST",
+      headers: { ...OWNER_A, "content-type": "application/json" },
+      body: JSON.stringify({ name: "Owner only" }),
+    })
+  ).json();
+
+  const archiveAttempt = await fetch(`${baseUrl}/api/projects/${created.project.id}/archive`, {
+    method: "POST",
+    headers: STAFF_A,
+  });
+  assert.equal(archiveAttempt.status, 403);
+
+  const ownerArchive = await fetch(`${baseUrl}/api/projects/${created.project.id}/archive`, {
+    method: "POST",
+    headers: OWNER_A,
+  });
+  assert.equal(ownerArchive.status, 200);
+
+  const unarchiveAttempt = await fetch(`${baseUrl}/api/projects/${created.project.id}/unarchive`, {
+    method: "POST",
+    headers: STAFF_A,
+  });
+  assert.equal(unarchiveAttempt.status, 403);
+});
+
+test("cross-tenant archive and unarchive attempts return 404", async () => {
+  const created = await (
+    await fetch(`${baseUrl}/api/projects`, {
+      method: "POST",
+      headers: { ...OWNER_A, "content-type": "application/json" },
+      body: JSON.stringify({ name: "Tenant A only" }),
+    })
+  ).json();
+
+  const archiveAttempt = await fetch(`${baseUrl}/api/projects/${created.project.id}/archive`, {
+    method: "POST",
+    headers: OWNER_B,
+  });
+  assert.equal(archiveAttempt.status, 404);
+
+  const ownerArchive = await fetch(`${baseUrl}/api/projects/${created.project.id}/archive`, {
+    method: "POST",
+    headers: OWNER_A,
+  });
+  assert.equal(ownerArchive.status, 200);
+
+  const unarchiveAttempt = await fetch(`${baseUrl}/api/projects/${created.project.id}/unarchive`, {
+    method: "POST",
+    headers: OWNER_B,
+  });
+  assert.equal(unarchiveAttempt.status, 404);
+});
+
 test("staff cannot delete and cross-tenant deletes fail", async () => {
   const created = await (
     await fetch(`${baseUrl}/api/projects`, {

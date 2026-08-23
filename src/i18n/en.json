@@ -7,6 +7,8 @@
   "projects.archived": "{count} archived",
   "projects.add": "Add project",
   "projects.delete": "Delete",
+  "projects.archive": "Archive",
+  "projects.unarchive": "Unarchive",
   "error.unauthorized": "Sign in to continue",
   "error.forbidden": "Only an owner can do that",
   "error.notFound": "That project could not be found"

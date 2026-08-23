@@ -7,6 +7,8 @@
   "projects.archived": "{count} archivés",
   "projects.add": "Ajouter un projet",
   "projects.delete": "Supprimer",
+  "projects.archive": "Archiver",
+  "projects.unarchive": "Désarchiver",
   "error.unauthorized": "Connectez-vous pour continuer",
   "error.forbidden": "Seul un propriétaire peut faire cela",
   "error.notFound": "Ce projet est introuvable"

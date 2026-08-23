@@ -11,7 +11,15 @@ import { fileURLToPath } from "node:url";
 import { sessionFromRequest } from "./src/auth.js";
 import { createDatabase } from "./src/db.js";
 import { LOCALES, resolveLocale, t } from "./src/i18n/index.js";
-import { AppError, createProject, deleteProject, listProjects, summarize } from "./src/projects.js";
+import {
+  AppError,
+  archiveProject,
+  createProject,
+  deleteProject,
+  listProjects,
+  summarize,
+  unarchiveProject,
+} from "./src/projects.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(HERE, "public");
@@ -78,6 +86,18 @@ export async function startServer(port = 3000, db) {
           const body = await readBody(req);
           const project = await createProject(database, session, body.name);
           return json(res, 201, { project });
+        }
+
+        const archiveMatch = /^\/api\/projects\/([^/]+)\/archive$/.exec(url.pathname);
+        if (archiveMatch && req.method === "POST") {
+          const project = await archiveProject(database, session, archiveMatch[1]);
+          return json(res, 200, { project });
+        }
+
+        const unarchiveMatch = /^\/api\/projects\/([^/]+)\/unarchive$/.exec(url.pathname);
+        if (unarchiveMatch && req.method === "POST") {
+          const project = await unarchiveProject(database, session, unarchiveMatch[1]);
+          return json(res, 200, { project });
         }
 
         const deleteMatch = /^\/api\/projects\/([^/]+)$/.exec(url.pathname);
