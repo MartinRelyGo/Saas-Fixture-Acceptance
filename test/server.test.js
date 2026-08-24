@@ -3,6 +3,33 @@ import { after, before, test } from "node:test";
 
 import { startServer } from "../server.js";
 
+test("the projects API filters all, active, and archived projects", async () => {
+  for (const [archived, expected] of [
+    [null, null],
+    ["all", null],
+    ["active", false],
+    ["archived", true],
+  ]) {
+    const query = archived === null ? "" : `?archived=${archived}`;
+    const response = await fetch(`${baseUrl}/api/projects${query}`, { headers: OWNER_A });
+    const payload = await response.json();
+    assert.equal(response.status, 200);
+    if (expected !== null) {
+      assert.ok(payload.projects.every((project) => project.archived === expected));
+    }
+  }
+});
+
+test("the archived filter remains scoped to the authenticated tenant", async () => {
+  const response = await fetch(`${baseUrl}/api/projects?archived=all&tenantId=b`, {
+    headers: OWNER_A,
+  });
+  const payload = await response.json();
+  assert.equal(response.status, 200);
+  assert.ok(payload.projects.length > 0);
+  assert.ok(payload.projects.every((project) => project.tenant_id === "a"));
+});
+
 const OWNER_A = { Authorization: "Bearer token-a-owner" };
 const STAFF_A = { Authorization: "Bearer token-a-staff" };
 const OWNER_B = { Authorization: "Bearer token-b-owner" };
