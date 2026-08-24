@@ -17,8 +17,17 @@ export class AppError extends Error {
 
 export async function listProjects(db, session) {
   return withSession(db, session, async (tx) => {
+    const filters = {
+      all: null,
+      active: false,
+      archived: true,
+    };
+    const archivedValue = filters[session.archived] ?? null;
     const res = await tx.query(
-      "SELECT id, tenant_id, name, archived FROM projects ORDER BY archived ASC, name ASC",
+      archivedValue === null
+        ? "SELECT id, tenant_id, name, archived FROM projects ORDER BY archived ASC, name ASC"
+        : "SELECT id, tenant_id, name, archived FROM projects WHERE archived = $1 ORDER BY archived ASC, name ASC",
+      archivedValue === null ? [] : [archivedValue],
     );
     return res.rows;
   });

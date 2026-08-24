@@ -26,6 +26,22 @@ test("a tenant only sees its own projects", async () => {
   assert.ok(b.every((p) => p.tenant_id === "b"));
 });
 
+test("project archive filters preserve tenant isolation", async () => {
+  for (const filter of ["all", "active", "archived"]) {
+    const a = await listProjects(db, { ...OWNER_A, archived: filter });
+    const b = await listProjects(db, { ...OWNER_B, archived: filter });
+
+    assert.ok(a.every((project) => project.tenant_id === "a"));
+    assert.ok(b.every((project) => project.tenant_id === "b"));
+
+    if (filter !== "all") {
+      const expectedArchived = filter === "archived";
+      assert.ok(a.every((project) => project.archived === expectedArchived));
+      assert.ok(b.every((project) => project.archived === expectedArchived));
+    }
+  }
+});
+
 test("a tenant cannot read another tenant's row even by primary key", async () => {
   const rows = await withSession(db, OWNER_A, async (tx) => {
     const res = await tx.query("SELECT id FROM projects WHERE id = 'p-b-1'");

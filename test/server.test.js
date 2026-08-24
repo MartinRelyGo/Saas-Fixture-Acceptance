@@ -3,6 +3,25 @@ import { after, before, test } from "node:test";
 
 import { startServer } from "../server.js";
 
+test("the projects API filters archive status without changing tenant scope", async () => {
+  for (const [query, expectedArchived] of [
+    ["", null],
+    ["?archived=all", null],
+    ["?archived=active", false],
+    ["?archived=archived", true],
+  ]) {
+    const response = await fetch(`${baseUrl}/api/projects${query}`, { headers: OWNER_A });
+    const body = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.ok(body.projects.length > 0);
+    assert.ok(body.projects.every((project) => project.tenant_id === "a"));
+    if (expectedArchived !== null) {
+      assert.ok(body.projects.every((project) => project.archived === expectedArchived));
+    }
+  }
+});
+
 const OWNER_A = { Authorization: "Bearer token-a-owner" };
 const STAFF_A = { Authorization: "Bearer token-a-staff" };
 const OWNER_B = { Authorization: "Bearer token-b-owner" };
