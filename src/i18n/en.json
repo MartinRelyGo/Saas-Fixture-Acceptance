@@ -5,9 +5,14 @@
   "projects.empty": "No projects yet",
   "projects.active": "{count} active",
   "projects.archived": "{count} archived",
+  "projects.filter.all": "All projects",
+  "projects.filter.active": "Active projects",
+  "projects.filter.archived": "Archived projects",
   "projects.add": "Add project",
   "projects.delete": "Delete",
   "error.unauthorized": "Sign in to continue",
   "error.forbidden": "Only an owner can do that",
-  "error.notFound": "That project could not be found"
+  "error.notFound": "That project could not be found",
+  "projects.humanNote": "Modified directly by a person during the Buildago work."
+}
 }

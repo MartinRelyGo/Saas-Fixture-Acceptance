@@ -3,7 +3,6 @@ import { after, before, test } from "node:test";
 
 import { createDatabase, withSession } from "../src/db.js";
 import { createProject, deleteProject, listProjects } from "../src/projects.js";
-
 const OWNER_A = { tenantId: "a", role: "owner" };
 const OWNER_B = { tenantId: "b", role: "owner" };
 
@@ -24,6 +23,21 @@ test("a tenant only sees its own projects", async () => {
   assert.ok(b.length > 0);
   assert.ok(a.every((p) => p.tenant_id === "a"));
   assert.ok(b.every((p) => p.tenant_id === "b"));
+});
+
+test("project archived filters preserve tenant isolation", async () => {
+  const all = await listProjects(db, { ...OWNER_A, archived: "all" });
+  const active = await listProjects(db, { ...OWNER_A, archived: "active" });
+  const archived = await listProjects(db, { ...OWNER_A, archived: "archived" });
+
+  assert.ok(all.every((project) => project.tenant_id === "a"));
+  assert.ok(active.every((project) => project.tenant_id === "a" && !project.archived));
+  assert.ok(archived.every((project) => project.tenant_id === "a" && project.archived));
+  assert.deepEqual(
+    new Set(all.map((project) => project.id)),
+    new Set([...active, ...archived].map((project) => project.id)),
+  );
+  assert.deepEqual(await listProjects(db, OWNER_A), all);
 });
 
 test("a tenant cannot read another tenant's row even by primary key", async () => {
