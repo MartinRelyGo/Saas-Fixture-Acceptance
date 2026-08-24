@@ -3,6 +3,11 @@ import { after, before, test } from "node:test";
 
 import { createDatabase, withSession } from "../src/db.js";
 import { createProject, deleteProject, listProjects } from "../src/projects.js";
+const FILTERS = {
+  all: () => true,
+  active: (project) => !project.archived,
+  archived: (project) => project.archived,
+};
 
 const OWNER_A = { tenantId: "a", role: "owner" };
 const OWNER_B = { tenantId: "b", role: "owner" };
@@ -24,6 +29,15 @@ test("a tenant only sees its own projects", async () => {
   assert.ok(b.length > 0);
   assert.ok(a.every((p) => p.tenant_id === "a"));
   assert.ok(b.every((p) => p.tenant_id === "b"));
+});
+
+test("project filters return the requested archived state within each tenant", async () => {
+  for (const [filter, matches] of Object.entries(FILTERS)) {
+    const a = await listProjects(db, OWNER_A, filter);
+    const b = await listProjects(db, OWNER_B, filter);
+    assert.ok(a.every((project) => project.tenant_id === "a" && matches(project)));
+    assert.ok(b.every((project) => project.tenant_id === "b" && matches(project)));
+  }
 });
 
 test("a tenant cannot read another tenant's row even by primary key", async () => {

@@ -17,8 +17,10 @@ export class AppError extends Error {
 
 export async function listProjects(db, session) {
   return withSession(db, session, async (tx) => {
+    const archived = session.archivedFilter === "active" ? false : session.archivedFilter === "archived" ? true : null;
     const res = await tx.query(
-      "SELECT id, tenant_id, name, archived FROM projects ORDER BY archived ASC, name ASC",
+      "SELECT id, tenant_id, name, archived FROM projects WHERE ($1::boolean IS NULL OR archived = $1) ORDER BY archived ASC, name ASC",
+      [archived],
     );
     return res.rows;
   });
